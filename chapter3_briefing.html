@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapter 3: The Technique Ignored</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      background-color: #0e0e10;
+      color: #d4c9b0;
+      font-family: 'Playfair Display', serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+      overflow-x: hidden;
+    }
+
+    /* Subtle grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.35;
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.4rem;
+    }
+
+    /* ─── Fade-in animations ─── */
+    .fade { opacity: 0; transform: translateY(18px); animation: fadeUp 0.9s ease forwards; }
+    .fade:nth-child(1) { animation-delay: 0.1s; }
+    .fade:nth-child(2) { animation-delay: 0.45s; }
+    .fade:nth-child(3) { animation-delay: 0.8s; }
+    .fade:nth-child(4) { animation-delay: 1.15s; }
+    .fade:nth-child(5) { animation-delay: 1.5s; }
+    .fade:nth-child(6) { animation-delay: 1.85s; }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── Chapter label ─── */
+    .chapter-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: #7a6e55;
+    }
+
+    /* ─── Main title ─── */
+    .title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.7rem, 5vw, 2.8rem);
+      font-weight: 700;
+      color: #e8dfc7;
+      line-height: 1.25;
+    }
+
+    .title span {
+      display: block;
+      font-size: 0.6em;
+      font-weight: 400;
+      color: #a89878;
+      letter-spacing: 0.1em;
+      margin-top: 0.3em;
+    }
+
+    /* ─── Divider ─── */
+    .divider {
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #6b5e42, transparent);
+    }
+
+    /* ─── Description block ─── */
+    .description {
+      font-size: 1.05rem;
+      line-height: 1.9;
+      color: #c0b49a;
+      font-style: italic;
+    }
+
+    .description p + p {
+      margin-top: 0.9em;
+    }
+
+    /* ─── Instructions block ─── */
+    .instructions {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px;
+      padding: 1.6rem 2rem;
+      width: 100%;
+      text-align: left;
+    }
+
+    .instructions h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #7a6e55;
+      margin-bottom: 1rem;
+    }
+
+    .instructions p {
+      font-size: 0.97rem;
+      line-height: 1.85;
+      color: #b5a98a;
+    }
+
+    .instructions p + p {
+      margin-top: 0.5em;
+    }
+
+    /* ─── Final hint ─── */
+    .hint {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      color: #c8b88a;
+      letter-spacing: 0.06em;
+      border-left: 2px solid #6b5e42;
+      padding-left: 1.2rem;
+      text-align: left;
+      width: 100%;
+    }
+
+    /* ─── Begin button ─── */
+    .btn-begin {
+      display: inline-block;
+      font-family: 'Cinzel', serif;
+      font-size: 0.9rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #0e0e10;
+      background: #c8b88a;
+      border: none;
+      padding: 0.85rem 2.8rem;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+      text-decoration: none;
+    }
+
+    .btn-begin:hover {
+      background: #e8dfc7;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(200, 184, 138, 0.2);
+    }
+
+    .btn-begin:active {
+      transform: translateY(0);
+    }
+
+    /* ─── Footer line ─── */
+    .footer-line {
+      font-size: 0.78rem;
+      color: #5a5040;
+      letter-spacing: 0.08em;
+      font-style: italic;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+
+    <div class="fade">
+      <p class="chapter-label">Chapter III &nbsp;·&nbsp; The Technique Ignored</p>
+    </div>
+
+    <div class="fade">
+      <h1 class="title">
+        The Technique Ignored
+        <span>Chapter Three</span>
+      </h1>
+      <div class="divider" style="margin: 1.2rem auto 0;"></div>
+    </div>
+
+    <div class="fade">
+      <div class="description">
+        <p>You have reached a critical stage.</p>
+        <p>The hero once stood here — faced with knowledge, yet chose to ignore it.</p>
+        <p>This time, you will not make the same mistake.</p>
+        <p>Each challenge you face will reveal a fragment.</p>
+        <p>But fragments alone are meaningless.</p>
+      </div>
+    </div>
+
+    <div class="fade">
+      <div class="instructions">
+        <h3>Instructions</h3>
+        <p>There are five rounds in this chapter.</p>
+        <p>Each round will give you a code.</p>
+        <p>Do not discard them.</p>
+        <p>Do not assume their purpose too early.</p>
+      </div>
+    </div>
+
+    <div class="fade">
+      <div class="hint">
+        Stack the codes from each round to reveal the final answer.
+      </div>
+    </div>
+
+    <div class="fade">
+      <a href="chapter3_air.html" class="btn-begin">Begin</a>
+      <p class="footer-line" style="margin-top: 1.4rem;">
+        Some truths only reveal themselves when seen in the right order.
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chapter 3 – Air: Voices of the Wind</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ─────────────────────────────────────────
+       DESIGN TOKENS
+    ───────────────────────────────────────── */
+    :root{
+      --bg-deep:   #01040e;
+      --bg-mid:    #040c22;
+      --accent:    #8ecfff;
+      --accent2:   #b09fff;
+      --glow:      rgba(142,207,255,.22);
+      --glow2:     rgba(176,159,255,.18);
+      --success:   #72ffc8;
+      --danger:    #ff7070;
+      --text:      #c8d8f0;
+      --muted:     #4a6080;
+      --cell-bg:   rgba(8,18,40,.85);
+      --cell-bd:   rgba(50,100,180,.25);
+    }
+
+    /* ─────────────────────────────────────────
+       RESET & BASE
+    ───────────────────────────────────────── */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    html,body{
+      height:100%; width:100%;
+      background:var(--bg-deep);
+      color:var(--text);
+      font-family:'Cinzel',serif;
+      overflow-x:hidden;
+    }
+
+    /* ─────────────────────────────────────────
+       DEEP BACKGROUND — radial starfield + gradient
+    ───────────────────────────────────────── */
+    body::before{
+      content:'';
+      position:fixed; inset:0;
+      background:
+        radial-gradient(ellipse 120% 80% at 30% 20%, #050d2a 0%, transparent 60%),
+        radial-gradient(ellipse 80% 60% at 80% 80%, #030819 0%, transparent 55%),
+        linear-gradient(160deg, #010712 0%, #020919 40%, #01040e 100%);
+      z-index:0;
+      pointer-events:none;
+    }
+
+    /* ─────────────────────────────────────────
+       PARALLAX ROOT — shifted by JS on mousemove
+    ───────────────────────────────────────── */
+    #parallax-root{
+      position:fixed; inset:0;
+      pointer-events:none;
+      z-index:0;
+      transition:transform .12s cubic-bezier(.25,.46,.45,.94);
+      will-change:transform;
+    }
+
+    /* ─────────────────────────────────────────
+       FOG / WIND STREAKS
+    ───────────────────────────────────────── */
+    .fog{
+      position:absolute; width:200%; height:100%;
+      background:radial-gradient(ellipse 70% 35% at 50% 50%,
+        rgba(100,160,255,.045) 0%, transparent 70%);
+      animation:fogDrift var(--dur,32s) linear infinite;
+    }
+    .fog:nth-child(1){--dur:32s; top:0%;   opacity:.8;}
+    .fog:nth-child(2){--dur:48s; top:25%;  opacity:.55; animation-delay:-18s;}
+    .fog:nth-child(3){--dur:62s; top:55%;  opacity:.4;  animation-delay:-9s;}
+    .fog:nth-child(4){--dur:40s; top:78%;  opacity:.3;  animation-delay:-24s;}
+
+    @keyframes fogDrift{
+      0%  {transform:translateX(-50%);}
+      100%{transform:translateX(0%);}
+    }
+
+    /* ─────────────────────────────────────────
+       WIND STREAK LINES — occasional gusts
+    ───────────────────────────────────────── */
+    #gust-layer{
+      position:fixed; inset:0;
+      pointer-events:none; z-index:1;
+      overflow:hidden;
+    }
+
+    .gust-streak{
+      position:absolute;
+      height:1px;
+      background:linear-gradient(90deg, transparent, rgba(160,210,255,.35), transparent);
+      border-radius:50%;
+      animation:gustFly var(--gd,1.8s) ease-in both;
+      top:var(--gt,50%);
+      width:var(--gw,0px);
+      left:-200px;
+    }
+
+    @keyframes gustFly{
+      0%  {transform:translateX(0);     opacity:0;}
+      15% {opacity:1;}
+      85% {opacity:.6;}
+      100%{transform:translateX(calc(100vw + 400px)); opacity:0;}
+    }
+
+    /* ─────────────────────────────────────────
+       PARTICLE CANVAS
+    ───────────────────────────────────────── */
+    #ptx{
+      position:fixed; inset:0;
+      pointer-events:none; z-index:1;
+    }
+
+    /* ─────────────────────────────────────────
+       MAIN SCROLL CONTAINER
+    ───────────────────────────────────────── */
+    #app{
+      position:relative; z-index:2;
+      max-width:820px;
+      margin:0 auto;
+      padding:2.5rem 1.4rem 6rem;
+    }
+
+    /* ─────────────────────────────────────────
+       FLOATING INTRO TEXT
+    ───────────────────────────────────────── */
+    #intro-text{
+      text-align:center;
+      margin-bottom:3.2rem;
+      animation:fadeSlideDown 1.6s ease both;
+    }
+
+    .chapter-tag{
+      font-size:.72rem;
+      letter-spacing:.4em;
+      color:var(--accent2);
+      text-transform:uppercase;
+      margin-bottom:.6rem;
+      opacity:.9;
+    }
+
+    #intro-text h1{
+      font-family:'Cinzel Decorative',serif;
+      font-size:clamp(1.5rem,5vw,2.8rem);
+      font-weight:700;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+      line-height:1.25;
+      animation:floatTitle 6s ease-in-out infinite;
+    }
+
+    @keyframes floatTitle{
+      0%,100%{transform:translateY(0);}
+      50%    {transform:translateY(-7px);}
+    }
+
+    /* Truth Echoes lines */
+    .truth-line{
+      font-family:'Cormorant Garamond',serif;
+      font-style:italic;
+      font-size:clamp(1rem,3vw,1.45rem);
+      color:var(--accent);
+      text-shadow:0 0 24px rgba(142,207,255,.55), 0 0 60px rgba(142,207,255,.2);
+      margin-top:1rem;
+      animation:floatLine 7s ease-in-out infinite, fadeSlideUp 2s ease both;
+      letter-spacing:.04em;
+    }
+
+    .truth-line:nth-child(3){
+      font-size:clamp(.85rem,2.5vw,1.15rem);
+      color:var(--accent2);
+      text-shadow:0 0 20px rgba(176,159,255,.5);
+      animation-delay:.4s, .6s;
+      animation-duration:9s, 2s;
+      margin-top:.55rem;
+    }
+
+    /* ─── HINT LINES (sequential fade-in, smaller, subtle) ─── */
+    .hint-line{
+      font-family:'Cormorant Garamond',serif;
+      font-style:italic;
+      font-size:clamp(.72rem,2vw,.95rem);
+      color:var(--accent);
+      opacity:0;                        /* starts invisible */
+      text-shadow:0 0 14px rgba(142,207,255,.4), 0 0 40px rgba(142,207,255,.12);
+      margin-top:.45rem;
+      letter-spacing:.03em;
+      animation:floatLine 10s ease-in-out infinite, hintFadeIn 1.2s ease forwards;
+      animation-delay:1.4s, 1.4s;       /* fade-in starts after line 2 settled */
+    }
+
+    .hint-line--2{
+      animation-delay:2.4s, 2.4s;       /* line 4 fades in after line 3 */
+    }
+
+    @keyframes hintFadeIn{
+      from{ opacity:0; transform:translateY(10px); }
+      to  { opacity:.8; transform:translateY(0);   }
+    }
+
+    @keyframes floatLine{
+      0%,100%{transform:translateY(0);}
+      50%    {transform:translateY(-9px);}
+    }
+
+    /* ─────────────────────────────────────────
+       CARDS
+    ───────────────────────────────────────── */
+    .card{
+      background:linear-gradient(135deg,rgba(8,18,42,.88),rgba(10,22,52,.82));
+      border:1px solid rgba(60,110,200,.2);
+      border-radius:16px;
+      padding:1.7rem 2rem;
+      margin-bottom:2rem;
+      backdrop-filter:blur(10px);
+      box-shadow:0 0 40px rgba(100,160,255,.07), inset 0 0 20px rgba(0,0,0,.4);
+      animation:fadeSlideUp .9s ease both;
+      position:relative;
+      overflow:hidden;
+    }
+    .card::before{
+      content:'';
+      position:absolute; top:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg,transparent,rgba(142,207,255,.25),transparent);
+    }
+    .card:nth-child(2){animation-delay:.15s;}
+    .card:nth-child(3){animation-delay:.3s;}
+    .card:nth-child(4){animation-delay:.45s;}
+
+    .section-label{
+      font-size:.65rem;
+      letter-spacing:.35em;
+      color:var(--accent);
+      text-transform:uppercase;
+      margin-bottom:1rem;
+      padding-bottom:.5rem;
+      border-bottom:1px solid rgba(60,110,200,.2);
+    }
+
+    /* ─────────────────────────────────────────
+       AUDIO PLAYER
+    ───────────────────────────────────────── */
+    .audio-intro{
+      font-size:1rem;
+      color:var(--text);
+      margin-bottom:.3rem;
+      letter-spacing:.04em;
+    }
+
+    .audio-hint{
+      font-family:'Cormorant Garamond',serif;
+      font-style:italic;
+      font-size:.9rem;
+      color:var(--muted);
+      margin-top:.8rem;
+    }
+
+    #player{
+      display:flex; align-items:center; gap:1rem; flex-wrap:wrap;
+      margin-top:1.1rem;
+      background:rgba(4,10,28,.7);
+      border:1px solid rgba(60,110,200,.2);
+      border-radius:12px;
+      padding:.9rem 1.2rem;
+    }
+
+    #play-btn{
+      width:42px; height:42px; border-radius:50%;
+      border:1.5px solid var(--accent);
+      background:transparent; color:var(--accent);
+      font-size:1rem; cursor:pointer; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      transition:background .22s, box-shadow .22s, transform .15s;
+    }
+    #play-btn:hover{
+      background:var(--accent); color:var(--bg-deep);
+      box-shadow:0 0 18px var(--glow);
+      transform:scale(1.08);
+    }
+
+    .range-input{
+      -webkit-appearance:none; flex:1; min-width:100px;
+      height:3px; border-radius:2px;
+      background:rgba(40,80,140,.5);
+      cursor:pointer; outline:none;
+    }
+    .range-input::-webkit-slider-thumb{
+      -webkit-appearance:none; width:11px; height:11px;
+      border-radius:50%; background:var(--accent);
+      box-shadow:0 0 8px var(--glow);
+    }
+
+    #vol-bar{ min-width:60px; flex:0; width:70px; }
+    #vol-bar::-webkit-slider-thumb{ background:var(--accent2); }
+
+    #time-disp{ font-size:.72rem; color:var(--muted); white-space:nowrap; }
+
+    /* ─────────────────────────────────────────
+       STATS ROW
+    ───────────────────────────────────────── */
+    .stats-row{
+      display:flex; align-items:center;
+      justify-content:space-between; flex-wrap:wrap;
+      gap:.6rem; margin-bottom:1.1rem;
+    }
+
+    #clicks-disp{
+      font-size:.85rem; color:var(--accent); letter-spacing:.08em;
+    }
+    #clicks-disp strong{ font-size:1.35rem; font-weight:900; }
+
+    /* ─────────────────────────────────────────
+       FEEDBACK BOX — animated fade in/out
+    ───────────────────────────────────────── */
+    #feedback{
+      font-size:.88rem; letter-spacing:.08em;
+      padding:.35rem .9rem; border-radius:8px;
+      min-height:1.5em; text-align:right;
+      transition:opacity .5s, color .5s, text-shadow .5s;
+      color:var(--muted);
+    }
+    #feedback.show{ opacity:1; }
+    #feedback.hide{ opacity:0; }
+    #feedback.calm{color:#72ffc8;text-shadow:0 0 12px rgba(114,255,200,.5);}
+    #feedback.close{color:#ffe07a;text-shadow:0 0 14px rgba(255,224,122,.5);}
+    #feedback.storm{color:var(--danger);text-shadow:0 0 12px rgba(255,112,112,.4);}
+
+    .wind-sep{
+      text-align:center; color:rgba(60,110,180,.3);
+      letter-spacing:.7em; font-size:1.1rem;
+      margin:.4rem 0 1.2rem;
+      animation:floatLine 8s ease-in-out infinite;
+    }
+
+    /* ─────────────────────────────────────────
+       9×9 ANTI-GRAVITY GRID
+    ───────────────────────────────────────── */
+    #grid-wrap{ overflow-x:auto; }
+
+    #grid{
+      display:grid;
+      grid-template-columns:repeat(9,1fr);
+      gap:5px;
+      min-width:300px;
+      width:100%;
+    }
+
+    /* Each cell gets a unique drift animation via --dx / --dy / --dur */
+    .cell{
+      aspect-ratio:1;
+      background:var(--cell-bg);
+      border:1px solid var(--cell-bd);
+      border-radius:6px;
+      cursor:pointer;
+      font-size:clamp(.5rem,1.7vw,1rem);
+      font-weight:700;
+      color:transparent;           /* hidden until reveal */
+      display:flex;
+      align-items:center; justify-content:center;
+      user-select:none;
+      position:relative; overflow:hidden;
+      /* anti-gravity drift */
+      animation:cellDrift var(--dur,5s) ease-in-out infinite alternate;
+      transform:translate(var(--dx,0px), var(--dy,0px));
+      transition:
+        transform .25s cubic-bezier(.34,1.56,.64,1),
+        border-color .25s,
+        background .25s,
+        box-shadow .25s;
+      will-change:transform;
+    }
+
+    @keyframes cellDrift{
+      0%  {transform:translate(var(--dx,0px), var(--dy,0px));}
+      100%{transform:translate(calc(var(--dx,0px)*-1), calc(var(--dy,0px)*-1));}
+    }
+
+    .cell:not(.revealed):hover{
+      background:rgba(20,50,100,.9);
+      border-color:rgba(100,180,255,.45);
+      box-shadow:0 0 18px rgba(142,207,255,.25), 0 6px 20px rgba(0,0,0,.4);
+      z-index:2;
+    }
+
+    .cell.revealed{
+      color:var(--accent); cursor:default;
+      background:rgba(5,15,40,.95);
+      border-color:rgba(80,160,255,.5);
+      animation:revealPulse .7s ease both, cellDrift var(--dur,5s) ease-in-out infinite alternate;
+      text-shadow:0 0 10px var(--accent);
+    }
+
+    .cell.path-reveal{
+      color:var(--success); border-color:var(--success);
+      background:rgba(4,20,14,.95);
+      box-shadow:0 0 14px rgba(114,255,200,.35);
+      text-shadow:0 0 10px var(--success);
+    }
+
+    @keyframes revealPulse{
+      0%  {box-shadow:0 0 0 transparent;  opacity:0; transform:scale(.7);}
+      50% {box-shadow:0 0 30px var(--glow);}
+      100%{box-shadow:0 0 8px var(--glow); opacity:1; transform:scale(1);}
+    }
+
+    /* ─────────────────────────────────────────
+       RIPPLE on click
+    ───────────────────────────────────────── */
+    .ripple{
+      position:absolute; border-radius:50%;
+      background:rgba(142,207,255,.2);
+      transform:scale(0);
+      animation:ripple .7s ease-out both;
+      pointer-events:none;
+    }
+    @keyframes ripple{
+      to{transform:scale(4.5); opacity:0;}
+    }
+
+    /* ─────────────────────────────────────────
+       STORM / SUCCESS OVERLAYS
+    ───────────────────────────────────────── */
+    .overlay{
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,.88);
+      z-index:200; backdrop-filter:blur(8px);
+      align-items:center; justify-content:center;
+      flex-direction:column; text-align:center;
+      gap:1.2rem; padding:2rem;
+    }
+    .overlay.show{display:flex; animation:fadeIn .7s ease both;}
+
+    .overlay h2{
+      font-family:'Cinzel Decorative',serif;
+      font-size:clamp(1.6rem,5vw,2.6rem);
+    }
+    .overlay p{ font-size:.9rem; color:var(--muted); max-width:380px; line-height:1.7; }
+
+    #storm-overlay h2{ color:var(--danger); text-shadow:0 0 30px rgba(255,112,112,.6); }
+    #success-overlay h2{ color:var(--success); text-shadow:0 0 30px rgba(114,255,200,.6); }
+
+    .wind-glyph{
+      font-size:4rem;
+      animation:floatTitle 3s ease-in-out infinite;
+      filter:drop-shadow(0 0 20px rgba(114,255,200,.5));
+    }
+
+    .overlay-btn{
+      padding:.75rem 2.2rem;
+      border-radius:10px;
+      font-family:'Cinzel',serif;
+      font-size:.92rem; letter-spacing:.12em;
+      cursor:pointer;
+      transition:transform .15s, box-shadow .2s;
+    }
+    .overlay-btn:hover{ transform:translateY(-2px); }
+
+    #restart-btn{
+      border:1.5px solid var(--accent); background:transparent; color:var(--accent);
+    }
+    #restart-btn:hover{ background:var(--accent); color:var(--bg-deep); box-shadow:0 0 20px var(--glow); }
+
+    #next-btn{
+      border:none;
+      background:linear-gradient(135deg,#1a5a3a,#0e3a28);
+      color:var(--success);
+      box-shadow:0 0 24px rgba(114,255,200,.3);
+      font-weight:700;
+    }
+    #next-btn:hover{ box-shadow:0 0 36px rgba(114,255,200,.5); }
+
+    /* ─────────────────────────────────────────
+       ANSWER SECTION
+    ───────────────────────────────────────── */
+    #ans-input{
+      width:100%;
+      background:rgba(4,10,28,.8);
+      border:1px solid rgba(60,110,200,.3);
+      border-radius:10px;
+      padding:.8rem 1.1rem;
+      color:var(--text);
+      font-family:'Cinzel',serif;
+      font-size:.9rem; letter-spacing:.1em;
+      outline:none;
+      transition:border-color .3s, box-shadow .3s;
+    }
+    #ans-input:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 20px var(--glow), 0 0 6px var(--glow);
+    }
+    #ans-input::placeholder{ color:var(--muted); }
+
+    #ans-btn{
+      margin-top:.9rem; width:100%;
+      padding:.85rem;
+      background:linear-gradient(135deg,rgba(20,50,120,.9),rgba(30,18,80,.9));
+      border:1.5px solid var(--accent2);
+      border-radius:10px;
+      color:var(--accent2);
+      font-family:'Cinzel',serif;
+      font-size:.92rem; letter-spacing:.15em;
+      cursor:pointer;
+      transition:box-shadow .25s, transform .15s;
+    }
+    #ans-btn:hover{
+      box-shadow:0 0 26px var(--glow2); transform:translateY(-2px);
+    }
+    #ans-btn:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+
+    #att-left{
+      font-size:.72rem; color:var(--muted);
+      margin-top:.5rem; text-align:right;
+    }
+
+    #ans-fb{
+      margin-top:.8rem; text-align:center;
+      font-size:.88rem; min-height:1.3em;
+      letter-spacing:.06em;
+      transition:color .3s, opacity .4s;
+    }
+    #ans-fb.wrong  { color:var(--danger); }
+    #ans-fb.correct{ color:var(--success); }
+
+    /* ─────────────────────────────────────────
+       KEYFRAMES UTILITIES
+    ───────────────────────────────────────── */
+    @keyframes fadeIn{
+      from{opacity:0;} to{opacity:1;}
+    }
+    @keyframes fadeSlideDown{
+      from{opacity:0; transform:translateY(-18px);}
+      to  {opacity:1; transform:none;}
+    }
+    @keyframes fadeSlideUp{
+      from{opacity:0; transform:translateY(22px);}
+      to  {opacity:1; transform:none;}
+    }
+    @keyframes shake{
+      0%,100%{transform:translateX(0)}
+      20%{transform:translateX(-7px)}
+      40%{transform:translateX(7px)}
+      60%{transform:translateX(-5px)}
+      80%{transform:translateX(5px)}
+    }
+    .shake{ animation:shake .45s ease; }
+
+    @keyframes successPulse{
+      0%,100%{box-shadow:0 0 0 transparent;}
+      50%    {box-shadow:0 0 40px rgba(114,255,200,.4);}
+    }
+    .success-pulse{ animation:successPulse 1s ease infinite; }
+
+    /* ─────────────────────────────────────────
+       SCROLLBAR
+    ───────────────────────────────────────── */
+    ::-webkit-scrollbar{width:5px;}
+    ::-webkit-scrollbar-track{background:var(--bg-deep);}
+    ::-webkit-scrollbar-thumb{background:rgba(40,80,140,.5); border-radius:3px;}
+
+    /* ─────────────────────────────────────────
+       RESPONSIVE
+    ───────────────────────────────────────── */
+    @media(max-width:500px){
+      .card{padding:1.2rem 1rem;}
+      #app{padding:1.5rem .8rem 5rem;}
+    }
+
+    /* ─────────────────────────────────────────
+       LOGIN OVERLAY
+    ───────────────────────────────────────── */
+    #login-overlay{
+      position:fixed; inset:0; z-index:300;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(1,4,14,.96);
+      backdrop-filter:blur(14px);
+      padding:2rem;
+      animation:fadeIn .6s ease both;
+    }
+    .login-card{
+      background:linear-gradient(135deg,rgba(8,18,42,.92),rgba(10,22,52,.88));
+      border:1px solid rgba(142,207,255,.22);
+      border-radius:20px;
+      padding:2.5rem 2.8rem;
+      max-width:430px; width:100%;
+      text-align:center;
+      box-shadow:0 0 60px rgba(100,160,255,.1),inset 0 0 30px rgba(0,0,0,.4);
+    }
+    .login-card h2{
+      font-family:'Cinzel Decorative',serif;
+      font-size:clamp(1.3rem,4vw,1.9rem);
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;
+      margin:.5rem 0 1rem;
+    }
+    .login-sub{
+      font-family:'Cormorant Garamond',serif;
+      font-style:italic;
+      color:var(--muted); font-size:.95rem;
+      margin-bottom:1.6rem; letter-spacing:.04em;
+    }
+    #team-input{
+      width:100%;
+      background:rgba(4,10,28,.8);
+      border:1px solid rgba(60,110,200,.3);
+      border-radius:10px;
+      padding:.8rem 1.1rem;
+      color:var(--text);
+      font-family:'Cinzel',serif;
+      font-size:.9rem; letter-spacing:.1em;
+      outline:none;
+      transition:border-color .3s,box-shadow .3s;
+      margin-bottom:.9rem;
+    }
+    #team-input:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 20px var(--glow);
+    }
+    #team-input::placeholder{color:var(--muted);}
+    #login-btn{
+      width:100%; padding:.85rem;
+      background:linear-gradient(135deg,rgba(20,50,120,.9),rgba(30,18,80,.9));
+      border:1.5px solid var(--accent2);
+      border-radius:10px;
+      color:var(--accent2);
+      font-family:'Cinzel',serif;
+      font-size:.92rem; letter-spacing:.15em;
+      cursor:pointer;
+      transition:box-shadow .25s,transform .15s;
+    }
+    #login-btn:hover{box-shadow:0 0 26px var(--glow2);transform:translateY(-2px);}
+    #login-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+    #login-err{
+      margin-top:.7rem;font-size:.8rem;
+      color:var(--danger);min-height:1.2em;
+      letter-spacing:.06em;
+    }
+    /* Hide the game until team is logged in */
+    #app{display:none;}
+  </style>
+</head>
+<body>
+
+<!-- ══ PARALLAX / FOG / PARTICLES ══ -->
+<div id="parallax-root">
+  <div class="fog"></div>
+  <div class="fog"></div>
+  <div class="fog"></div>
+  <div class="fog"></div>
+</div>
+
+<div id="gust-layer"></div>
+
+<canvas id="ptx"></canvas>
+
+<!-- ══ LOGIN OVERLAY ══ -->
+<div id="login-overlay">
+  <div class="login-card">
+    <p class="chapter-tag">◈ &nbsp;Chapter 3 &nbsp;·&nbsp; Round 1&nbsp; ◈</p>
+    <h2>Air: Voices of the Wind</h2>
+    <p class="login-sub">Enter your team name to continue your journey.</p>
+    <input id="team-input" type="text" placeholder="Team Name…" maxlength="40"
+           autocomplete="off" spellcheck="false"
+           onkeydown="if(event.key==='Enter') handleLogin()"/>
+    <button id="login-btn" onclick="handleLogin()">✦ &nbsp;Begin the Journey</button>
+    <p id="login-err"></p>
+  </div>
+</div>
+
+<!-- ══ STORM OVERLAY ══ -->
+<div id="storm-overlay" class="overlay" role="alertdialog">
+  <h2>⛈ The Storm Consumes Your Path…</h2>
+  <p>You have spent all 18 whispers. The wind has fallen silent and will not answer.</p>
+  <button class="overlay-btn" id="restart-btn" onclick="restartGame()">Try Again</button>
+</div>
+
+<!-- ══ SUCCESS OVERLAY ══ -->
+<div id="success-overlay" class="overlay" role="alertdialog">
+  <div class="wind-glyph">🌬</div>
+  <h2>The Wind Speaks!</h2>
+  <p id="success-msg">You have heard what the wind whispered.<br>The next round awaits beyond the silence.</p>
+  <button class="overlay-btn" id="next-btn" onclick="goNext()">Enter the Next Round →</button>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="intro-text">
+    <p class="chapter-tag">◈ &nbsp;Chapter 3 &nbsp;·&nbsp; Round 1&nbsp; ◈</p>
+    <h1>Air: Voices of the Wind</h1>
+    <p class="truth-line">"Truth echoes."</p>
+    <p class="truth-line">"All paths begin where balance lies."</p>
+    <p class="hint-line">"The wind remembers the path it first chose."</p>
+    <p class="hint-line hint-line--2">"When the wind reaches the edge, it returns."</p>
+  </div>
+
+  <!-- ── AUDIO SECTION ── -->
+  <section class="card">
+    <p class="section-label">🎧 &nbsp;The Oracle Speaks</p>
+    <p class="audio-intro">Listen carefully. Truth echoes in the wind.</p>
+
+    <div id="player">
+      <!-- Replace src with your actual audio file -->
+      <audio id="aud" preload="none">
+        <source src="wind audio.mpeg" type="audio/mpeg"/>
+      </audio>
+
+      <button id="play-btn" onclick="togglePlay()" title="Play / Pause">▶</button>
+      <input id="seek" class="range-input" type="range" min="0" max="100" value="0" step=".1" oninput="seekAudio()"/>
+      <span id="time-disp">0:00 / 0:00</span>
+      <span style="color:var(--muted);font-size:.9rem">🔊</span>
+      <input id="vol-bar" class="range-input" type="range" min="0" max="1" step=".02" value=".7" oninput="setVol()"/>
+    </div>
+
+    <p class="audio-hint">"The loudest voice is not always the truth."</p>
+  </section>
+
+  <!-- ── GRID SECTION ── -->
+  <section class="card">
+    <p class="section-label">🧩 &nbsp;The Wind Grid</p>
+
+    <div class="stats-row">
+      <div id="clicks-disp">Remaining Whispers:&nbsp;<strong id="clicks-num">18</strong></div>
+      <div id="feedback" class="hide">Silence…</div>
+    </div>
+
+    <div class="wind-sep">~ &nbsp;~ &nbsp;~</div>
+
+    <div id="grid-wrap">
+      <div id="grid"></div>
+    </div>
+  </section>
+
+  <!-- ── ANSWER SECTION ── -->
+  <section class="card">
+    <p class="section-label">🔐 &nbsp;Speak to the Wind</p>
+    <input id="ans-input" type="text" placeholder="Enter what the wind revealed…" maxlength="20" autocomplete="off" spellcheck="false"/>
+    <button id="ans-btn" onclick="submitAnswer()">✦ &nbsp;Speak</button>
+    <p id="att-left">Attempts remaining: <strong>3</strong></p>
+    <p id="ans-fb"></p>
+  </section>
+
+</div><!-- /app -->
+
+
+<!-- ════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════ -->
+<script>
+/* ════════════════════════════════════
+   CONFIG — CUSTOMISE THESE
+════════════════════════════════════ */
+
+// The correct final answer
+const CORRECT_ANSWER  = "W";   // Single character shown in the final grid cell
+
+// 9×9 grid
+const GRID_COLS  = 9;
+const GRID_ROWS  = 9;
+const MAX_CLICKS = 18;
+
+// Next round URL — update this to your Round 2 page
+const NEXT_URL = "round2.html";
+
+// Hidden correct path (row,col) 0-indexed — winds through the grid
+// Final cell = last entry = holds first char of CORRECT_ANSWER
+const CORRECT_PATH = [
+  [4,4],[3,4],[3,5],[2,5],[2,6],[1,6],[1,7],[0,7],[0,8]
+];
+const FINAL_CELL = CORRECT_PATH[CORRECT_PATH.length - 1]; // [0,8]
+
+// Path set for quick lookup
+const pathSet = new Set(CORRECT_PATH.map(([r,c])=>`${r},${c}`));
+
+// Manhattan distance from final cell
+const distFromFinal = (r,c) =>
+  Math.abs(r - FINAL_CELL[0]) + Math.abs(c - FINAL_CELL[1]);
+
+/* ════════════════════════════════════
+   GRID DATA — seeded pseudo-random chars
+════════════════════════════════════ */
+const CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+function seededRand(seed){
+  let s = seed;
+  return ()=>{
+    s = ((s * 1664525) + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
+}
+const rng = seededRand(20260404);
+
+const gridVals = [];
+for(let r=0;r<GRID_ROWS;r++){
+  gridVals[r]=[];
+  for(let c=0;c<GRID_COLS;c++){
+    gridVals[r][c]=CHARSET[Math.floor(rng()*CHARSET.length)];
+  }
+}
+// Place answer character at final cell
+gridVals[FINAL_CELL[0]][FINAL_CELL[1]] = CORRECT_ANSWER[0];
+
+/* ════════════════════════════════════
+   STATE
+════════════════════════════════════ */
+let clicksUsed = 0;
+let attempts   = 3;
+let gameOver   = false;
+let completed  = false;
+let revealed   = new Set();
+
+/* ════════════════════════════════════
+   TEAM / PERSISTENCE
+════════════════════════════════════ */
+let teamName = localStorage.getItem('csi_team_name') || null;
+
+/* Save state to MongoDB via serverless API (debounced 300 ms) */
+function saveStateToDB(){
+  if(!teamName) return;
+  clearTimeout(saveStateToDB._t);
+  saveStateToDB._t = setTimeout(async ()=>{
+    try{
+      await fetch('/api/state',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          teamName,
+          clicksUsed,
+          attempts,
+          gameOver,
+          completed,
+          revealed:[...revealed]
+        })
+      });
+    }catch(e){}
+  }, 300);
+}
+
+/* Load state from MongoDB */
+async function loadStateFromDB(team){
+  try{
+    const r = await fetch(`/api/state?team=${encodeURIComponent(team)}`);
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){ return null; }
+}
+
+/* Apply a loaded state object to JS variables */
+function applyState(saved){
+  if(!saved) return;
+  clicksUsed = saved.clicksUsed ?? 0;
+  attempts   = saved.attempts   ?? 3;
+  gameOver   = saved.gameOver   ?? false;
+  completed  = saved.completed  ?? false;
+  revealed   = new Set(saved.revealed ?? []);
+}
+
+/* Restore UI elements to match current state (called after buildGrid) */
+function restoreUI(){
+  updateClicks();
+  document.getElementById('att-left').innerHTML=
+    `Attempts remaining: <strong>${attempts}</strong>`;
+  if(attempts<=0 && !gameOver && !completed){
+    document.getElementById('ans-input').disabled=true;
+    document.getElementById('ans-btn').disabled=true;
+    document.getElementById('ans-fb').textContent='The wind has grown deaf to you.';
+    document.getElementById('ans-fb').className='wrong';
+  }
+  if(completed){
+    document.getElementById('success-overlay').classList.add('show');
+  } else if(gameOver){
+    document.getElementById('storm-overlay').classList.add('show');
+  }
+}
+
+/* Login handler */
+async function handleLogin(){
+  const input = document.getElementById('team-input');
+  const errEl = document.getElementById('login-err');
+  const btn   = document.getElementById('login-btn');
+  const name  = input.value.trim();
+
+  if(!name){
+    errEl.textContent='Please enter your team name.';
+    input.classList.remove('shake'); void input.offsetWidth; input.classList.add('shake');
+    return;
+  }
+
+  btn.disabled=true;
+  btn.textContent='Finding your path…';
+  errEl.textContent='';
+
+  const saved = await loadStateFromDB(name);
+  teamName = name;
+  localStorage.setItem('csi_team_name', name);
+
+  applyState(saved); // no-op if saved is null (fresh team)
+
+  document.getElementById('login-overlay').style.display='none';
+  document.getElementById('app').style.display='block';
+  buildGrid();
+  restoreUI();
+}
+
+/* Auto-login if team name is already in localStorage */
+(async function init(){
+  if(teamName){
+    // Pre-populate login input just in case, then auto-skip
+    const saved = await loadStateFromDB(teamName);
+    applyState(saved);
+    document.getElementById('login-overlay').style.display='none';
+    document.getElementById('app').style.display='block';
+    buildGrid();
+    restoreUI();
+  }
+})();
+
+/* ════════════════════════════════════
+   BUILD GRID
+════════════════════════════════════ */
+function buildGrid(){
+  const g = document.getElementById("grid");
+  g.innerHTML = "";
+  // Update CSS columns for 9
+  g.style.gridTemplateColumns = `repeat(${GRID_COLS},1fr)`;
+
+  for(let r=0;r<GRID_ROWS;r++){
+    for(let c=0;c<GRID_COLS;c++){
+      const el = document.createElement("div");
+      el.className = "cell";
+      el.id        = `c${r}-${c}`;
+      el.dataset.r = r; el.dataset.c = c;
+      el.textContent = gridVals[r][c];
+
+      // Anti-gravity drift: give each cell a unique random offset + duration
+      const dx  = (rng()*4-2).toFixed(2);  // -2 to +2 px
+      const dy  = (rng()*4-2).toFixed(2);
+      const dur = (4 + rng()*6).toFixed(2); // 4–10s
+      el.style.setProperty("--dx",  dx+"px");
+      el.style.setProperty("--dy",  dy+"px");
+      el.style.setProperty("--dur", dur+"s");
+      // Random animation delay so they don't all drift in sync
+      el.style.animationDelay = `${(rng()*dur).toFixed(2)}s`;
+
+      // Re-apply revealed state when rebuilding after refresh / restart
+      const key = `${r},${c}`;
+      if(revealed.has(key)){
+        el.classList.add('revealed');
+        if(pathSet.has(key)) el.classList.add('path-reveal');
+      }
+
+      el.addEventListener("click", onCellClick);
+      g.appendChild(el);
+    }
+  }
+}
+
+/* ════════════════════════════════════
+   CELL CLICK
+════════════════════════════════════ */
+function onCellClick(e){
+  if(gameOver) return;
+  const cell = e.currentTarget;
+  const r = +cell.dataset.r, c = +cell.dataset.c;
+  const key = `${r},${c}`;
+
+  if(revealed.has(key)) return;
+
+  if(clicksUsed >= MAX_CLICKS){ triggerStorm(); return; }
+
+  // ── Special messages: center cell and boundary cells ──
+  const isCenterR = r === Math.floor(GRID_ROWS/2);
+  const isCenterC = c === Math.floor(GRID_COLS/2);
+  const isCenter  = isCenterR && isCenterC;
+  const isBoundary = r===0 || r===GRID_ROWS-1 || c===0 || c===GRID_COLS-1;
+
+  if(isCenter){
+    showSpecialMsg("✦ The wind awakens at balance.");
+  } else if(isBoundary){
+    showSpecialMsg("↺ The wind does not end here…");
+  }
+
+  revealed.add(key);
+  clicksUsed++;
+  updateClicks();
+  saveStateToDB();
+
+  // Ripple
+  spawnRipple(cell);
+
+  // Wind click sound (Web Audio)
+  playBreath();
+
+  // Reveal
+  cell.classList.add("revealed");
+  if(pathSet.has(key)) cell.classList.add("path-reveal");
+
+  // Feedback
+  showFeedback(distFromFinal(r,c));
+
+  // Check storm
+  if(clicksUsed >= MAX_CLICKS){
+    setTimeout(()=>{
+      if(!document.getElementById("success-overlay").classList.contains("show"))
+        triggerStorm();
+    }, 800);
+  }
+}
+
+/* ── Special immersion message (center / boundary) ── */
+function showSpecialMsg(txt){
+  const fb = document.getElementById("feedback");
+  fb.className = "hide";
+  void fb.offsetWidth;
+  fb.textContent = txt;
+  fb.style.color = "var(--accent2)";
+  fb.style.textShadow = "0 0 14px rgba(176,159,255,.5)";
+  fb.classList.add("show");
+  clearTimeout(fb._t);
+  fb._t = setTimeout(()=>{
+    fb.style.color=""; fb.style.textShadow="";
+    fb.classList.remove("show"); fb.classList.add("hide");
+  }, 3200);
+}
+
+/* ── Feedback ── */
+function showFeedback(dist){
+  const fb = document.getElementById("feedback");
+  fb.className = "hide";
+  // Force reflow for fade restart
+  void fb.offsetWidth;
+
+  if(dist === 0){
+    fb.textContent = "⟡ You are where the wind rests…";
+    fb.classList.add("close","show");
+  } else if(dist <= 2){
+    fb.textContent = "✧ The wind feels calmer here…";
+    fb.classList.add("calm","show");
+  } else if(dist <= 4){
+    fb.textContent = "⚑ The wind stirs uncertainly…";
+    fb.classList.add("calm","show");
+  } else {
+    fb.textContent = "⛈ The storm grows stronger…";
+    fb.classList.add("storm","show");
+  }
+
+  // Fade out after 3.5s
+  clearTimeout(fb._t);
+  fb._t = setTimeout(()=>{ fb.classList.remove("show"); fb.classList.add("hide"); }, 3500);
+}
+
+/* ── Click counter ── */
+function updateClicks(){
+  document.getElementById("clicks-num").textContent = Math.max(0, MAX_CLICKS - clicksUsed);
+}
+
+/* ── Storm ── */
+function triggerStorm(){
+  gameOver = true;
+  saveStateToDB();
+  document.getElementById("storm-overlay").classList.add("show");
+}
+
+/* ── Restart ── */
+function restartGame(){
+  document.getElementById("storm-overlay").classList.remove("show");
+  clicksUsed = 0; attempts = 3; gameOver = false; completed = false; revealed = new Set();
+  document.getElementById("ans-input").value   = "";
+  document.getElementById("ans-input").disabled = false;
+  document.getElementById("ans-btn").disabled   = false;
+  document.getElementById("ans-fb").textContent = "";
+  document.getElementById("att-left").innerHTML = "Attempts remaining: <strong>3</strong>";
+  const fb = document.getElementById("feedback");
+  fb.textContent = "Silence…"; fb.className = "hide";
+  updateClicks();
+  saveStateToDB();
+  buildGrid();
+}
+
+/* ── Next ── */
+function goNext(){ window.location.href = NEXT_URL; }
+
+/* ════════════════════════════════════
+   RIPPLE
+════════════════════════════════════ */
+function spawnRipple(cell){
+  const r = document.createElement("span");
+  r.className = "ripple";
+  const s = cell.offsetWidth;
+  r.style.cssText = `width:${s}px;height:${s}px;left:0;top:0`;
+  cell.appendChild(r);
+  r.addEventListener("animationend",()=>r.remove());
+}
+
+/* ════════════════════════════════════
+   WEB AUDIO — breath / wind click
+════════════════════════════════════ */
+let actx = null;
+function playBreath(){
+  try{
+    if(!actx) actx = new(window.AudioContext||window.webkitAudioContext)();
+    const buf  = actx.createBuffer(1, actx.sampleRate*.28, actx.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let i=0;i<data.length;i++){
+      data[i]=(Math.random()*2-1)*Math.pow(1-i/data.length,2.5)*.14;
+    }
+    const src = actx.createBufferSource();
+    const bpf = actx.createBiquadFilter();
+    const g   = actx.createGain();
+    bpf.type="bandpass"; bpf.frequency.value=900; bpf.Q.value=.5;
+    g.gain.value=.55;
+    src.buffer=buf;
+    src.connect(bpf); bpf.connect(g); g.connect(actx.destination);
+    src.start();
+  }catch(e){}
+}
+
+/* ════════════════════════════════════
+   AUDIO PLAYER CONTROLS
+════════════════════════════════════ */
+const aud    = document.getElementById("aud");
+const playB  = document.getElementById("play-btn");
+const seekB  = document.getElementById("seek");
+const timeD  = document.getElementById("time-disp");
+const volB   = document.getElementById("vol-bar");
+aud.volume   = .7;
+
+function togglePlay(){
+  if(aud.paused){ aud.play().catch(()=>{}); playB.textContent="⏸"; }
+  else          { aud.pause(); playB.textContent="▶"; }
+}
+function seekAudio(){
+  if(!isNaN(aud.duration)) aud.currentTime=(seekB.value/100)*aud.duration;
+}
+function setVol(){ aud.volume=volB.value; }
+function fmt(t){ return `${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,"0")}`; }
+
+aud.addEventListener("timeupdate",()=>{
+  if(!isNaN(aud.duration)&&aud.duration>0){
+    seekB.value=(aud.currentTime/aud.duration)*100;
+    timeD.textContent=`${fmt(aud.currentTime)} / ${fmt(aud.duration)}`;
+  }
+});
+aud.addEventListener("ended",()=>{ playB.textContent="▶"; });
+
+/* ════════════════════════════════════
+   ANSWER SUBMISSION
+════════════════════════════════════ */
+function submitAnswer(){
+  if(attempts<=0||gameOver) return;
+  const inp = document.getElementById("ans-input");
+  const fb  = document.getElementById("ans-fb");
+  const val = inp.value.trim().toUpperCase();
+
+  if(!val){ fb.textContent="The wind hears nothing…"; fb.className="wrong"; return; }
+
+  attempts--;
+  document.getElementById("att-left").innerHTML=`Attempts remaining: <strong>${attempts}</strong>`;
+  saveStateToDB();
+
+  if(val===CORRECT_ANSWER.toUpperCase()){
+    fb.textContent=""; fb.className="correct";
+    inp.classList.add("success-pulse");
+    completed = true;
+    saveStateToDB();
+    setTimeout(()=>{
+      document.getElementById("success-overlay").classList.add("show");
+    },800);
+  } else {
+    fb.textContent="⚑ The wind rejects your answer…";
+    fb.className="wrong";
+    inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake");
+    if(attempts<=0){
+      setTimeout(()=>{
+        fb.textContent="The wind has grown deaf to you.";
+        inp.disabled=true;
+        document.getElementById("ans-btn").disabled=true;
+      }, 900);
+    }
+  }
+}
+document.getElementById("ans-input").addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); });
+
+/* ════════════════════════════════════
+   PARTICLE SYSTEM — wind-influenced
+════════════════════════════════════ */
+(function(){
+  const cv  = document.getElementById("ptx");
+  const ctx = cv.getContext("2d");
+
+  // Mouse wind influence
+  let mouseX=0, mouseY=0, windX=0, windY=0;
+  window.addEventListener("mousemove",e=>{
+    mouseX=e.clientX; mouseY=e.clientY;
+    // Normalise to [-1,1]: how far from center
+    windX=(e.clientX/window.innerWidth  - .5)*2;
+    windY=(e.clientY/window.innerHeight - .5)*2;
+  });
+
+  let W,H;
+  function resize(){ W=cv.width=innerWidth; H=cv.height=innerHeight; }
+
+  const COUNT = 110;
+  const pts   = [];
+
+  function mkPt(){
+    return{
+      x:Math.random()*W,
+      y:Math.random()*H,
+      r:Math.random()*1.4+.3,
+      spd:Math.random()*.4+.07,
+      a:Math.random()*.55+.08,
+      fade:Math.random()*.004+.0015,
+      ang:Math.random()*Math.PI*2,
+    };
+  }
+
+  function initPts(){ pts.length=0; for(let i=0;i<COUNT;i++) pts.push(mkPt()); }
+
+  function step(){
+    ctx.clearRect(0,0,W,H);
+    for(const p of pts){
+      // Wind shifts direction gently
+      p.ang += .004;
+      const wx = Math.cos(p.ang)*.25 + windX*.15;
+      const wy = Math.sin(p.ang)*.12 + windY*.08 - p.spd; // always drift upward
+      p.x += wx; p.y += wy;
+      p.a -= p.fade;
+
+      if(p.a<=0||p.y<-10||p.x<-20||p.x>W+20){
+        Object.assign(p, mkPt(), { y:H+5, x:Math.random()*W, a:Math.random()*.45+.08 });
+      }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle=`rgba(142,207,255,${Math.max(0,p.a)})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(step);
+  }
+
+  resize(); initPts(); step();
+  window.addEventListener("resize",()=>{ resize(); });
+})();
+
+/* ════════════════════════════════════
+   PARALLAX on mouse move
+════════════════════════════════════ */
+(function(){
+  const root = document.getElementById("parallax-root");
+  window.addEventListener("mousemove",e=>{
+    const cx=(e.clientX/innerWidth -.5)*10;
+    const cy=(e.clientY/innerHeight-.5)*10;
+    root.style.transform=`translate(${cx}px,${cy}px)`;
+  });
+})();
+
+/* ════════════════════════════════════
+   WIND GUST GENERATOR
+  Spawns streak lines periodically
+════════════════════════════════════ */
+(function(){
+  const layer = document.getElementById("gust-layer");
+
+  function spawnGust(){
+    const streak = document.createElement("div");
+    streak.className="gust-streak";
+    const w=80+Math.random()*300;
+    const t=5+Math.random()*88;  // % from top
+    const d=1.4+Math.random()*1.2; // duration
+    streak.style.setProperty("--gw",  w+"px");
+    streak.style.setProperty("--gt",  t+"%");
+    streak.style.setProperty("--gd",  d+"s");
+    layer.appendChild(streak);
+    streak.addEventListener("animationend",()=>streak.remove());
+
+    // 2–5 streaks in a burst, staggered
+    const burst=Math.floor(Math.random()*3)+1;
+    for(let i=1;i<burst;i++){
+      setTimeout(()=>{
+        const s2=document.createElement("div");
+        s2.className="gust-streak";
+        s2.style.setProperty("--gw",(w*.7+Math.random()*80)+"px");
+        s2.style.setProperty("--gt",(t+Math.random()*6-3)+"%");
+        s2.style.setProperty("--gd",(d+Math.random()*.4)+"s");
+        layer.appendChild(s2);
+        s2.addEventListener("animationend",()=>s2.remove());
+      }, i*180);
+    }
+
+    // Next gust in 4–12s
+    setTimeout(spawnGust, 4000+Math.random()*8000);
+  }
+  setTimeout(spawnGust, 2000);
+})();
+
+/* ════════════════════════════════════
+   INIT — handled by the async init() IIFE above
+════════════════════════════════════ */
+</script>
+</body>
+</html>
