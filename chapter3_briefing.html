@@ -187,6 +187,84 @@
       font-style: italic;
       margin-top: 0.5rem;
     }
+
+    /* ─── LOGIN OVERLAY ─── */
+    #login-overlay {
+      position: fixed; inset: 0; z-index: 300;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(14, 14, 16, 0.96);
+      backdrop-filter: blur(14px);
+      padding: 2rem;
+      animation: fadeIn 0.6s ease both;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .login-card {
+      background: linear-gradient(135deg, rgba(30, 25, 20, 0.92), rgba(15, 12, 10, 0.88));
+      border: 1px solid rgba(200, 184, 138, 0.22);
+      border-radius: 20px;
+      padding: 2.5rem 2.8rem;
+      max-width: 430px; width: 100%;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(107, 94, 66, 0.1), inset 0 0 30px rgba(0, 0, 0, 0.4);
+    }
+    .login-card h2 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.3rem, 4vw, 1.9rem);
+      color: #e8dfc7;
+      margin: 0.5rem 0 1rem;
+    }
+    .login-sub {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      color: #b5a98a; font-size: 0.95rem;
+      margin-bottom: 1.6rem; letter-spacing: 0.04em;
+    }
+    #team-input {
+      width: 100%;
+      background: rgba(10, 8, 6, 0.8);
+      border: 1px solid rgba(107, 94, 66, 0.3);
+      border-radius: 10px;
+      padding: 0.8rem 1.1rem;
+      color: #e8dfc7;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.9rem; letter-spacing: 0.1em;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      margin-bottom: 0.9rem;
+    }
+    #team-input:focus {
+      border-color: #c8b88a;
+      box-shadow: 0 0 20px rgba(200, 184, 138, 0.2);
+    }
+    #team-input::placeholder { color: #5a5040; }
+    
+    #login-btn {
+      width: 100%; padding: 0.85rem;
+      background: linear-gradient(135deg, rgba(80, 68, 48, 0.9), rgba(40, 34, 24, 0.9));
+      border: 1px solid #c8b88a;
+      border-radius: 10px;
+      color: #c8b88a;
+      font-family: 'Cinzel', serif;
+      font-size: 0.92rem; letter-spacing: 0.15em;
+      cursor: pointer;
+      transition: box-shadow 0.25s, transform 0.15s;
+    }
+    #login-btn:hover { box-shadow: 0 0 26px rgba(200, 184, 138, 0.2); transform: translateY(-2px); }
+    #login-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    #login-err {
+      margin-top: 0.7rem; font-size: 0.8rem;
+      color: #ff7070; min-height: 1.2em;
+      letter-spacing: 0.06em;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-7px); }
+      40% { transform: translateX(7px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
+    }
+    .shake { animation: shake 0.45s ease; }
   </style>
 </head>
 <body>
@@ -231,12 +309,59 @@
     </div>
 
     <div class="fade">
-      <a href="chapter3_air.html" class="btn-begin">Begin</a>
+      <button onclick="document.getElementById('login-overlay').style.display='flex';" class="btn-begin">Begin</button>
       <p class="footer-line" style="margin-top: 1.4rem;">
         Some truths only reveal themselves when seen in the right order.
       </p>
     </div>
 
   </div>
+
+  <!-- ══ LOGIN OVERLAY ══ -->
+  <div id="login-overlay">
+    <div class="login-card">
+      <p class="chapter-label">◈ &nbsp;Registration&nbsp; ◈</p>
+      <h2>Enter Your Identity</h2>
+      <p class="login-sub">Only identified teams may proceed.</p>
+      <input id="team-input" type="text" placeholder="Team Name…" maxlength="40"
+             autocomplete="off" spellcheck="false"
+             onkeydown="if(event.key==='Enter') handleLogin()"/>
+      <button id="login-btn" onclick="handleLogin()">✦ &nbsp;Confirm Identity</button>
+      <p id="login-err"></p>
+    </div>
+  </div>
+
+  <script>
+    function handleLogin(){
+      const input = document.getElementById('team-input');
+      const errEl = document.getElementById('login-err');
+      const btn   = document.getElementById('login-btn');
+      const name  = input.value.trim();
+
+      if(!name){
+        errEl.textContent = 'Please enter your team name.';
+        input.classList.remove('shake'); void input.offsetWidth; input.classList.add('shake');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Verifying…';
+      errEl.textContent = '';
+
+      localStorage.setItem('csi_team_name', name);
+      window.location.href = 'chapter3_air.html';
+    }
+
+    // Auto-skip if team already logged in
+    window.addEventListener('DOMContentLoaded', () => {
+      const teamName = localStorage.getItem('csi_team_name');
+      if (teamName) {
+        // Option to prefill: document.getElementById('team-input').value = teamName;
+      }
+    });
+
+    // Option: If you want to automatically redirect straight to the game if they already logged in, uncomment this:
+    // if(localStorage.getItem('csi_team_name')) window.location.href = 'chapter3_air.html';
+  </script>
 </body>
 </html>

@@ -573,78 +573,8 @@
       #app{padding:1.5rem .8rem 5rem;}
     }
 
-    /* ─────────────────────────────────────────
-       LOGIN OVERLAY
-    ───────────────────────────────────────── */
-    #login-overlay{
-      position:fixed; inset:0; z-index:300;
-      display:flex; align-items:center; justify-content:center;
-      background:rgba(1,4,14,.96);
-      backdrop-filter:blur(14px);
-      padding:2rem;
-      animation:fadeIn .6s ease both;
-    }
-    .login-card{
-      background:linear-gradient(135deg,rgba(8,18,42,.92),rgba(10,22,52,.88));
-      border:1px solid rgba(142,207,255,.22);
-      border-radius:20px;
-      padding:2.5rem 2.8rem;
-      max-width:430px; width:100%;
-      text-align:center;
-      box-shadow:0 0 60px rgba(100,160,255,.1),inset 0 0 30px rgba(0,0,0,.4);
-    }
-    .login-card h2{
-      font-family:'Cinzel Decorative',serif;
-      font-size:clamp(1.3rem,4vw,1.9rem);
-      background:linear-gradient(135deg,var(--accent),var(--accent2));
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-      background-clip:text;
-      margin:.5rem 0 1rem;
-    }
-    .login-sub{
-      font-family:'Cormorant Garamond',serif;
-      font-style:italic;
-      color:var(--muted); font-size:.95rem;
-      margin-bottom:1.6rem; letter-spacing:.04em;
-    }
-    #team-input{
-      width:100%;
-      background:rgba(4,10,28,.8);
-      border:1px solid rgba(60,110,200,.3);
-      border-radius:10px;
-      padding:.8rem 1.1rem;
-      color:var(--text);
-      font-family:'Cinzel',serif;
-      font-size:.9rem; letter-spacing:.1em;
-      outline:none;
-      transition:border-color .3s,box-shadow .3s;
-      margin-bottom:.9rem;
-    }
-    #team-input:focus{
-      border-color:var(--accent);
-      box-shadow:0 0 20px var(--glow);
-    }
-    #team-input::placeholder{color:var(--muted);}
-    #login-btn{
-      width:100%; padding:.85rem;
-      background:linear-gradient(135deg,rgba(20,50,120,.9),rgba(30,18,80,.9));
-      border:1.5px solid var(--accent2);
-      border-radius:10px;
-      color:var(--accent2);
-      font-family:'Cinzel',serif;
-      font-size:.92rem; letter-spacing:.15em;
-      cursor:pointer;
-      transition:box-shadow .25s,transform .15s;
-    }
-    #login-btn:hover{box-shadow:0 0 26px var(--glow2);transform:translateY(-2px);}
-    #login-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-    #login-err{
-      margin-top:.7rem;font-size:.8rem;
-      color:var(--danger);min-height:1.2em;
-      letter-spacing:.06em;
-    }
-    /* Hide the game until team is logged in */
-    #app{display:none;}
+    /* Hide the game until team is logged in via JS */
+    #app{opacity:0; transition:opacity .4s;}
   </style>
 </head>
 <body>
@@ -660,20 +590,6 @@
 <div id="gust-layer"></div>
 
 <canvas id="ptx"></canvas>
-
-<!-- ══ LOGIN OVERLAY ══ -->
-<div id="login-overlay">
-  <div class="login-card">
-    <p class="chapter-tag">◈ &nbsp;Chapter 3 &nbsp;·&nbsp; Round 1&nbsp; ◈</p>
-    <h2>Air: Voices of the Wind</h2>
-    <p class="login-sub">Enter your team name to continue your journey.</p>
-    <input id="team-input" type="text" placeholder="Team Name…" maxlength="40"
-           autocomplete="off" spellcheck="false"
-           onkeydown="if(event.key==='Enter') handleLogin()"/>
-    <button id="login-btn" onclick="handleLogin()">✦ &nbsp;Begin the Journey</button>
-    <p id="login-err"></p>
-  </div>
-</div>
 
 <!-- ══ STORM OVERLAY ══ -->
 <div id="storm-overlay" class="overlay" role="alertdialog">
@@ -882,46 +798,18 @@ function restoreUI(){
   }
 }
 
-/* Login handler */
-async function handleLogin(){
-  const input = document.getElementById('team-input');
-  const errEl = document.getElementById('login-err');
-  const btn   = document.getElementById('login-btn');
-  const name  = input.value.trim();
-
-  if(!name){
-    errEl.textContent='Please enter your team name.';
-    input.classList.remove('shake'); void input.offsetWidth; input.classList.add('shake');
+/* Auto-login or redirect if no team name is set */
+(async function init(){
+  if(!teamName){
+    window.location.href = 'chapter3_briefing.html';
     return;
   }
-
-  btn.disabled=true;
-  btn.textContent='Finding your path…';
-  errEl.textContent='';
-
-  const saved = await loadStateFromDB(name);
-  teamName = name;
-  localStorage.setItem('csi_team_name', name);
-
-  applyState(saved); // no-op if saved is null (fresh team)
-
-  document.getElementById('login-overlay').style.display='none';
-  document.getElementById('app').style.display='block';
+  
+  const saved = await loadStateFromDB(teamName);
+  applyState(saved);
+  document.getElementById('app').style.opacity = '1';
   buildGrid();
   restoreUI();
-}
-
-/* Auto-login if team name is already in localStorage */
-(async function init(){
-  if(teamName){
-    // Pre-populate login input just in case, then auto-skip
-    const saved = await loadStateFromDB(teamName);
-    applyState(saved);
-    document.getElementById('login-overlay').style.display='none';
-    document.getElementById('app').style.display='block';
-    buildGrid();
-    restoreUI();
-  }
 })();
 
 /* ════════════════════════════════════
