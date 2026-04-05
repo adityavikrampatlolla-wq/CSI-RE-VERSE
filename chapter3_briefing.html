@@ -25,7 +25,7 @@
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      padding: 2rem 1.5rem;
+      padding: 1rem;
       overflow-x: hidden;
     }
 
@@ -49,7 +49,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2.4rem;
+      gap: 1.4rem; /* Reduced gap to fit screen */
     }
 
     /* ─── Fade-in animations ─── */
@@ -77,10 +77,11 @@
     /* ─── Main title ─── */
     .title {
       font-family: 'Cinzel', serif;
-      font-size: clamp(1.7rem, 5vw, 2.8rem);
+      font-size: clamp(1.4rem, 4.5vw, 2.4rem); /* Slightly smaller so it fits */
       font-weight: 700;
       color: #e8dfc7;
       line-height: 1.25;
+      margin-top: -0.5rem;
     }
 
     .title span {
@@ -108,7 +109,7 @@
     }
 
     .description p + p {
-      margin-top: 0.9em;
+      margin-top: 0.4em;
     }
 
     /* ─── Instructions block ─── */
@@ -116,7 +117,7 @@
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.07);
       border-radius: 8px;
-      padding: 1.6rem 2rem;
+      padding: 1.2rem 1.6rem;
       width: 100%;
       text-align: left;
     }
@@ -137,7 +138,7 @@
     }
 
     .instructions p + p {
-      margin-top: 0.5em;
+      margin-top: 0.3em;
     }
 
     /* ─── Final hint ─── */
@@ -279,7 +280,7 @@
         The Technique Ignored
         <span>Chapter Three</span>
       </h1>
-      <div class="divider" style="margin: 1.2rem auto 0;"></div>
+      <div class="divider" style="margin: 0.8rem auto 0;"></div>
     </div>
 
     <div class="fade">
