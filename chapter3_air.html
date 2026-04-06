@@ -591,18 +591,11 @@
 
 <canvas id="ptx"></canvas>
 
-<!-- ══ STORM OVERLAY ══ -->
-<div id="storm-overlay" class="overlay" role="alertdialog">
-  <h2>⛈ The Storm Consumes Your Path…</h2>
-  <p>You have spent all 18 whispers. The wind has fallen silent and will not answer.<br><br>📢 Please contact a volunteer for assistance.</p>
-  <button class="overlay-btn" id="restart-btn" onclick="restartGame()">Try Again</button>
-</div>
-
 <!-- ══ SUCCESS OVERLAY ══ -->
 <div id="success-overlay" class="overlay" role="alertdialog">
   <div class="wind-glyph">🌬</div>
   <h2>The Wind Speaks!</h2>
-  <p id="success-msg">You have heard what the wind whispered.<br>The next round awaits beyond the silence.</p>
+  <p id="success-msg">Your code for Round 1 is: 9<br><br>The next round awaits beyond the silence.</p>
   <button class="overlay-btn" id="next-btn" onclick="goNext()">Enter the Next Round →</button>
 </div>
 
@@ -644,8 +637,7 @@
   <section class="card">
     <p class="section-label">🧩 &nbsp;The Wind Grid</p>
 
-    <div class="stats-row">
-      <div id="clicks-disp">Remaining Whispers:&nbsp;<strong id="clicks-num">18</strong></div>
+    <div class="stats-row" style="justify-content: flex-end;">
       <div id="feedback" class="hide">Silence…</div>
     </div>
 
@@ -661,7 +653,6 @@
     <p class="section-label">🔐 &nbsp;Speak to the Wind</p>
     <input id="ans-input" type="text" placeholder="Enter what the wind revealed…" maxlength="20" autocomplete="off" spellcheck="false"/>
     <button id="ans-btn" onclick="submitAnswer()">✦ &nbsp;Speak</button>
-    <p id="att-left">Attempts remaining: <strong>5</strong> / 5</p>
     <p id="ans-fb"></p>
   </section>
 
@@ -676,23 +667,19 @@
    CONFIG — CUSTOMISE THESE
 ════════════════════════════════════ */
 
-// The correct final answer
-const CORRECT_ANSWER  = "W";   // Single character shown in the final grid cell
-
 // 9×9 grid
 const GRID_COLS  = 9;
 const GRID_ROWS  = 9;
-const MAX_CLICKS = 18;
 
 // Next round URL — update this to your Round 2 page
 const NEXT_URL = "round2.html";
 
 // Hidden correct path (row,col) 0-indexed — winds through the grid
-// Final cell = last entry = holds first char of CORRECT_ANSWER
+// start (4,4), N 2 -> (2,4), E 4 -> (2,8), S 3 -> (5,8), W 5 -> (5,3), E 7 -> (5,6) bounce, S 1 -> (6,6), N 6 -> (0,6), W 2 -> (0,4)
 const CORRECT_PATH = [
-  [4,4],[3,4],[3,5],[2,5],[2,6],[1,6],[1,7],[0,7],[0,8]
+  [4,4],[2,4],[2,8],[5,8],[5,3],[5,6],[6,6],[0,6],[0,4]
 ];
-const FINAL_CELL = CORRECT_PATH[CORRECT_PATH.length - 1]; // [0,8]
+const FINAL_CELL = CORRECT_PATH[CORRECT_PATH.length - 1]; // [0,4]
 
 // Path set for quick lookup
 const pathSet = new Set(CORRECT_PATH.map(([r,c])=>`${r},${c}`));
@@ -722,94 +709,21 @@ for(let r=0;r<GRID_ROWS;r++){
     gridVals[r][c]=CHARSET[Math.floor(rng()*CHARSET.length)];
   }
 }
-// Place answer character at final cell
-gridVals[FINAL_CELL[0]][FINAL_CELL[1]] = CORRECT_ANSWER[0];
+
+// Generate the correct answer directly from the path in the seeded grid
+const CORRECT_ANSWER = CORRECT_PATH.map(([r,c]) => gridVals[r][c]).join('');
 
 /* ════════════════════════════════════
    STATE
 ════════════════════════════════════ */
-let clicksUsed = 0;
-let attempts   = 5;
 let gameOver   = false;
 let completed  = false;
 let revealed   = new Set();
 
-/* ════════════════════════════════════
-   TEAM / PERSISTENCE
-════════════════════════════════════ */
-let teamName = localStorage.getItem('csi_team_name') || null;
-
-/* Save state to MongoDB via serverless API (debounced 300 ms) */
-function saveStateToDB(){
-  if(!teamName) return;
-  clearTimeout(saveStateToDB._t);
-  saveStateToDB._t = setTimeout(async ()=>{
-    try{
-      await fetch('/api/state',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          teamName,
-          clicksUsed,
-          attempts,
-          gameOver,
-          completed,
-          revealed:[...revealed]
-        })
-      });
-    }catch(e){}
-  }, 300);
-}
-
-/* Load state from MongoDB */
-async function loadStateFromDB(team){
-  try{
-    const r = await fetch(`/api/state?team=${encodeURIComponent(team)}`);
-    if(!r.ok) return null;
-    return await r.json();
-  }catch(e){ return null; }
-}
-
-/* Apply a loaded state object to JS variables */
-function applyState(saved){
-  if(!saved) return;
-  clicksUsed = saved.clicksUsed ?? 0;
-  attempts   = saved.attempts   ?? 5;
-  gameOver   = saved.gameOver   ?? false;
-  completed  = saved.completed  ?? false;
-  revealed   = new Set(saved.revealed ?? []);
-}
-
-/* Restore UI elements to match current state (called after buildGrid) */
-function restoreUI(){
-  updateClicks();
-  document.getElementById('att-left').innerHTML=
-    `Attempts remaining: <strong>${attempts}</strong> / 5`;
-  if(attempts<=0 && !gameOver && !completed){
-    document.getElementById('ans-input').disabled=true;
-    document.getElementById('ans-btn').disabled=true;
-    document.getElementById('ans-fb').textContent='The wind has grown deaf to you.';
-    document.getElementById('ans-fb').className='wrong';
-  }
-  if(completed){
-    document.getElementById('success-overlay').classList.add('show');
-  } else if(gameOver){
-    document.getElementById('storm-overlay').classList.add('show');
-  }
-}
-
-/* Auto-login or redirect if no team name is set */
-(async function init(){
-  if(!teamName){
-    window.location.href = 'chapter3_briefing.html';
-    return;
-  }
-  
-  const saved = await loadStateFromDB(teamName);
-  applyState(saved);
+/* Init directly without required login */
+(function init(){
   document.getElementById('app').style.opacity = '1';
   buildGrid();
-  restoreUI();
 })();
 
 /* ════════════════════════════════════
@@ -863,8 +777,6 @@ function onCellClick(e){
 
   if(revealed.has(key)) return;
 
-  if(clicksUsed >= MAX_CLICKS){ triggerStorm(); return; }
-
   // ── Special messages: center cell and boundary cells ──
   const isCenterR = r === Math.floor(GRID_ROWS/2);
   const isCenterC = c === Math.floor(GRID_COLS/2);
@@ -878,9 +790,6 @@ function onCellClick(e){
   }
 
   revealed.add(key);
-  clicksUsed++;
-  updateClicks();
-  saveStateToDB();
 
   // Ripple
   spawnRipple(cell);
@@ -894,14 +803,6 @@ function onCellClick(e){
 
   // Feedback
   showFeedback(distFromFinal(r,c));
-
-  // Check storm
-  if(clicksUsed >= MAX_CLICKS){
-    setTimeout(()=>{
-      if(!document.getElementById("success-overlay").classList.contains("show"))
-        triggerStorm();
-    }, 800);
-  }
 }
 
 /* ── Special immersion message (center / boundary) ── */
@@ -946,31 +847,15 @@ function showFeedback(dist){
   fb._t = setTimeout(()=>{ fb.classList.remove("show"); fb.classList.add("hide"); }, 3500);
 }
 
-/* ── Click counter ── */
-function updateClicks(){
-  document.getElementById("clicks-num").textContent = Math.max(0, MAX_CLICKS - clicksUsed);
-}
-
-/* ── Storm ── */
-function triggerStorm(){
-  gameOver = true;
-  saveStateToDB();
-  document.getElementById("storm-overlay").classList.add("show");
-}
-
 /* ── Restart ── */
 function restartGame(){
-  document.getElementById("storm-overlay").classList.remove("show");
-  clicksUsed = 0; attempts = 5; gameOver = false; completed = false; revealed = new Set();
+  gameOver = false; completed = false; revealed = new Set();
   document.getElementById("ans-input").value   = "";
   document.getElementById("ans-input").disabled = false;
   document.getElementById("ans-btn").disabled   = false;
   document.getElementById("ans-fb").textContent = "";
-  document.getElementById("att-left").innerHTML = "Attempts remaining: <strong>5</strong> / 5";
   const fb = document.getElementById("feedback");
   fb.textContent = "Silence…"; fb.className = "hide";
-  updateClicks();
-  saveStateToDB();
   buildGrid();
 }
 
@@ -1044,36 +929,24 @@ aud.addEventListener("ended",()=>{ playB.textContent="▶"; });
    ANSWER SUBMISSION
 ════════════════════════════════════ */
 function submitAnswer(){
-  if(attempts<=0||gameOver) return;
+  if(gameOver) return;
   const inp = document.getElementById("ans-input");
   const fb  = document.getElementById("ans-fb");
   const val = inp.value.trim().toUpperCase();
 
   if(!val){ fb.textContent="The wind hears nothing…"; fb.className="wrong"; return; }
 
-  attempts--;
-  document.getElementById("att-left").innerHTML=`Attempts remaining: <strong>${attempts}</strong>`;
-  saveStateToDB();
-
   if(val===CORRECT_ANSWER.toUpperCase()){
     fb.textContent=""; fb.className="correct";
     inp.classList.add("success-pulse");
     completed = true;
-    saveStateToDB();
     setTimeout(()=>{
       document.getElementById("success-overlay").classList.add("show");
     },800);
   } else {
-    fb.textContent="⚑ The wind rejects your answer…";
+    fb.textContent="The wind senses your path… but it is incomplete.";
     fb.className="wrong";
     inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake");
-    if(attempts<=0){
-      setTimeout(()=>{
-        fb.textContent="The wind has grown deaf to you.";
-        inp.disabled=true;
-        document.getElementById("ans-btn").disabled=true;
-      }, 900);
-    }
   }
 }
 document.getElementById("ans-input").addEventListener("keydown",e=>{ if(e.key==="Enter") submitAnswer(); });

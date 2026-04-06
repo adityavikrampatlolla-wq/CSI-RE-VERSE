@@ -310,59 +310,11 @@
     </div>
 
     <div class="fade">
-      <button onclick="document.getElementById('login-overlay').style.display='flex';" class="btn-begin">Begin</button>
+      <button onclick="window.location.href='chapter3_air.html';" class="btn-begin">Begin</button>
       <p class="footer-line" style="margin-top: 1.4rem;">
         Some truths only reveal themselves when seen in the right order.
       </p>
     </div>
 
-  </div>
-
-  <!-- ══ LOGIN OVERLAY ══ -->
-  <div id="login-overlay">
-    <div class="login-card">
-      <p class="chapter-label">◈ &nbsp;Registration&nbsp; ◈</p>
-      <h2>Enter Your Identity</h2>
-      <p class="login-sub">Only identified teams may proceed.</p>
-      <input id="team-input" type="text" placeholder="Team Name…" maxlength="40"
-             autocomplete="off" spellcheck="false"
-             onkeydown="if(event.key==='Enter') handleLogin()"/>
-      <button id="login-btn" onclick="handleLogin()">✦ &nbsp;Confirm Identity</button>
-      <p id="login-err"></p>
-    </div>
-  </div>
-
-  <script>
-    function handleLogin(){
-      const input = document.getElementById('team-input');
-      const errEl = document.getElementById('login-err');
-      const btn   = document.getElementById('login-btn');
-      const name  = input.value.trim();
-
-      if(!name){
-        errEl.textContent = 'Please enter your team name.';
-        input.classList.remove('shake'); void input.offsetWidth; input.classList.add('shake');
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = 'Verifying…';
-      errEl.textContent = '';
-
-      localStorage.setItem('csi_team_name', name);
-      window.location.href = 'chapter3_air.html';
-    }
-
-    // Auto-skip if team already logged in
-    window.addEventListener('DOMContentLoaded', () => {
-      const teamName = localStorage.getItem('csi_team_name');
-      if (teamName) {
-        // Option to prefill: document.getElementById('team-input').value = teamName;
-      }
-    });
-
-    // Option: If you want to automatically redirect straight to the game if they already logged in, uncomment this:
-    // if(localStorage.getItem('csi_team_name')) window.location.href = 'chapter3_air.html';
-  </script>
 </body>
 </html>
