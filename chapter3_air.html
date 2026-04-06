@@ -398,13 +398,6 @@
       text-shadow:0 0 10px var(--accent);
     }
 
-    .cell.path-reveal{
-      color:var(--success); border-color:var(--success);
-      background:rgba(4,20,14,.95);
-      box-shadow:0 0 14px rgba(114,255,200,.35);
-      text-shadow:0 0 10px var(--success);
-    }
-
     @keyframes revealPulse{
       0%  {box-shadow:0 0 0 transparent;  opacity:0; transform:scale(.7);}
       50% {box-shadow:0 0 30px var(--glow);}
@@ -710,8 +703,13 @@ for(let r=0;r<GRID_ROWS;r++){
   }
 }
 
-// Generate the correct answer directly from the path in the seeded grid
-const CORRECT_ANSWER = CORRECT_PATH.map(([r,c]) => gridVals[r][c]).join('');
+// Generate the correct answer directly from the path, ensuring a good mix.
+// We explicitly override the path cells with this balanced string!
+const balancedCode = "X7M3P9R4K";
+CORRECT_PATH.forEach(([r,c], i) => {
+  gridVals[r][c] = balancedCode[i];
+});
+const CORRECT_ANSWER = balancedCode;
 
 /* ════════════════════════════════════
    STATE
@@ -757,7 +755,6 @@ function buildGrid(){
       const key = `${r},${c}`;
       if(revealed.has(key)){
         el.classList.add('revealed');
-        if(pathSet.has(key)) el.classList.add('path-reveal');
       }
 
       el.addEventListener("click", onCellClick);
@@ -799,7 +796,6 @@ function onCellClick(e){
 
   // Reveal
   cell.classList.add("revealed");
-  if(pathSet.has(key)) cell.classList.add("path-reveal");
 
   // Feedback
   showFeedback(distFromFinal(r,c));
