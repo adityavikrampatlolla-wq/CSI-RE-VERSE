@@ -588,7 +588,10 @@
 <div id="success-overlay" class="overlay" role="alertdialog">
   <div class="wind-glyph">🌬</div>
   <h2>The Wind Speaks!</h2>
-  <p id="success-msg">Your code for Round 1 is: 9<br><br>The next round awaits beyond the silence.</p>
+  <p id="success-msg">
+    <span style="font-size: 1.4rem; color: var(--accent); text-shadow: 0 0 12px var(--glow); font-weight: 900; letter-spacing: 0.1em; border: 1px solid rgba(142,207,255,0.3); padding: 0.5rem 1rem; border-radius: 8px; display: inline-block; background: rgba(8,18,40,0.6);">Your code for Round 1 is: <span style="color: var(--success); text-shadow: 0 0 14px var(--success);">9</span></span>
+    <br><br>The next round awaits beyond the silence.
+  </p>
   <button class="overlay-btn" id="next-btn" onclick="goNext()">Enter the Next Round →</button>
 </div>
 
