@@ -670,12 +670,12 @@ const GRID_ROWS  = 9;
 // Next round URL — update this to your Round 2 page
 const NEXT_URL = "round2.html";
 
-// Hidden correct path (row,col) 0-indexed — winds through the grid
-// start (4,4), N 2 -> (2,4), E 4 -> (2,8), S 3 -> (5,8), W 5 -> (5,3), E 7 -> (5,6) bounce, S 1 -> (6,6), N 6 -> (0,6), W 2 -> (0,4)
+// Hidden correct path (row,col) 0-indexed based on user request:
+// (5,5)->(3,5)->(3,9)->(6,9)->(6,4)->(6,2)->(7,2)->(1,2)->(1,9) mapped to 0-indexed:
 const CORRECT_PATH = [
-  [4,4],[2,4],[2,8],[5,8],[5,3],[5,6],[6,6],[0,6],[0,4]
+  [4,4], [2,4], [2,8], [5,8], [5,3], [5,1], [6,1], [0,1], [0,8]
 ];
-const FINAL_CELL = CORRECT_PATH[CORRECT_PATH.length - 1]; // [0,4]
+const FINAL_CELL = CORRECT_PATH[CORRECT_PATH.length - 1]; // [0,8]
 
 // Path set for quick lookup
 const pathSet = new Set(CORRECT_PATH.map(([r,c])=>`${r},${c}`));
@@ -687,7 +687,8 @@ const distFromFinal = (r,c) =>
 /* ════════════════════════════════════
    GRID DATA — seeded pseudo-random chars
 ════════════════════════════════════ */
-const CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+// Added extra numbers to guarantee a balanced alphanumeric mix
+const CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789012345678901234567890123456789";
 
 function seededRand(seed){
   let s = seed;
@@ -706,13 +707,8 @@ for(let r=0;r<GRID_ROWS;r++){
   }
 }
 
-// Generate the correct answer directly from the path, ensuring a good mix.
-// We explicitly override the path cells with this balanced string!
-const balancedCode = "X7M3P9R4K";
-CORRECT_PATH.forEach(([r,c], i) => {
-  gridVals[r][c] = balancedCode[i];
-});
-const CORRECT_ANSWER = balancedCode;
+// Generate the correct answer directly from the path in the seeded grid
+const CORRECT_ANSWER = CORRECT_PATH.map(([r,c]) => gridVals[r][c]).join('');
 
 /* ════════════════════════════════════
    STATE
